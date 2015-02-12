@@ -346,23 +346,19 @@ t &lt;- which.max(average_step_per_interval)
 
 <ol>
 <li>Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)</li>
-<li>A strategy for filling in all of the missing values in the dataset. 
-    - we assign the average number of steps of the same interval to the corresponding missing values</li>
-<li>Create a new dataset that is equal to the original dataset but with the missing data filled in.</li>
-<li>Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
-    - Yes. They differ. The impact is that: (1) the days containing missing values in the first step now are moved from the bin 0-5000 to the bin 10000 - 15000 (2) the days containing missing values have the same values after filled by the average.</li>
+<li><p>A strategy for filling in all of the missing values in the dataset. </p>
+
+<pre><code>- we assign the average number of steps of the same interval to the corresponding missing values
+</code></pre></li>
+<li><p>Create a new dataset that is equal to the original dataset but with the missing data filled in.</p></li>
+<li><p>Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?</p>
+
+<pre><code>- Yes. They differ. The impact is that: (1) the days containing missing values in the first step now are moved from the bin 0-5000 to the bin 10000 - 15000 (2) the days containing missing values have the same values after filled by the average.
+</code></pre></li>
 </ol>
 
-<pre><code class="r">nrow_na &lt;- nrow(data[is.na(data$steps),])
-idx_na &lt;- which(is.na(data$steps))
-nadata &lt;- data[idx_na,]
-newdata &lt;- data
-interval_list &lt;- unique(nadata$interval)
-for (i in (1:length(interval_list)))
-        {
-        nadata[nadata$interval == interval_list[i], 1] &lt;- average_step_per_interval[as.character(interval_list[i])]
-        }
-newdata[idx_na, ] &lt;- nadata
+<pre><code class="r">#nrow_na: the number of rows with NAs
+nrow_na &lt;- nrow(data[is.na(data$steps),])
 
 print(paste(&quot;the total number of missing values:&quot;, nrow_na))
 </code></pre>
@@ -370,7 +366,21 @@ print(paste(&quot;the total number of missing values:&quot;, nrow_na))
 <pre><code>## [1] &quot;the total number of missing values: 2304&quot;
 </code></pre>
 
-<pre><code class="r">mean_steps_per_day_mv_filled &lt;- tapply(newdata$steps, newdata$date, mean)
+<pre><code class="r">#we use the average number of steps of the same interval to the corresponding missing values
+#the dataset with the filled missing values are stored in newdata
+idx_na &lt;- which(is.na(data$steps))
+nadata &lt;- data[idx_na,]
+newdata &lt;- data
+
+interval_list &lt;- unique(nadata$interval)
+for (i in (1:length(interval_list)))
+        {
+        nadata[nadata$interval == interval_list[i], 1] &lt;- average_step_per_interval[as.character(interval_list[i])]
+        }
+newdata[idx_na, ] &lt;- nadata
+
+#re-compute the mean and median
+mean_steps_per_day_mv_filled &lt;- tapply(newdata$steps, newdata$date, mean)
 median_steps_per_day_mv_filled &lt;- tapply(newdata$steps, newdata$date, median)
 print(mean_steps_per_day_mv_filled)
 </code></pre>
@@ -445,14 +455,16 @@ day &lt;- weekdays(newdata$date)
 weekend_idx &lt;- which(day == &quot;Saturday&quot; | day == &quot;Sunday&quot; )
 newdata$day[weekend_idx] &lt;- &quot;weekend&quot;
 
+#calculate weekdays_ave_step_per_interval and weekend_ave_step_per_interval
 data_weekdays &lt;- newdata[newdata$day == &quot;weekday&quot;, ]
 data_weekend &lt;- newdata[newdata$day == &quot;weekend&quot;, ]
 weekdays_ave_step_per_interval &lt;- tapply(data_weekdays$steps, data_weekdays$interval, mean)
 weekend_ave_step_per_interval &lt;- tapply(data_weekend$steps, data_weekend$interval, mean)
 
 ave_step_dataframe &lt;- data.frame(ave_step= c(weekdays_ave_step_per_interval, weekend_ave_step_per_interval), interval = c(names(weekdays_ave_step_per_interval), names(weekend_ave_step_per_interval) ), day = c(rep(&quot;weekday&quot;,each=length(weekdays_ave_step_per_interval)), rep(&quot;weekend&quot;,each=length(weekend_ave_step_per_interval))) )
-
 ave_step_dataframe$interval &lt;- as.numeric(as.character(ave_step_dataframe$interval))
+
+#here we make a plot
 xyplot(ave_step ~ interval|day,data = ave_step_dataframe, type = &quot;l&quot;, layout = c(1,2))
 </code></pre>
 

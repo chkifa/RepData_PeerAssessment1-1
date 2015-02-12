@@ -149,23 +149,18 @@ t <- which.max(average_step_per_interval)
 ## Imputing missing values
 1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
 2. A strategy for filling in all of the missing values in the dataset. 
+        
         - we assign the average number of steps of the same interval to the corresponding missing values
+        
 3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
 4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+        
         - Yes. They differ. The impact is that: (1) the days containing missing values in the first step now are moved from the bin 0-5000 to the bin 10000 - 15000 (2) the days containing missing values have the same values after filled by the average.
 
 
 ```r
+#nrow_na: the number of rows with NAs
 nrow_na <- nrow(data[is.na(data$steps),])
-idx_na <- which(is.na(data$steps))
-nadata <- data[idx_na,]
-newdata <- data
-interval_list <- unique(nadata$interval)
-for (i in (1:length(interval_list)))
-        {
-        nadata[nadata$interval == interval_list[i], 1] <- average_step_per_interval[as.character(interval_list[i])]
-        }
-newdata[idx_na, ] <- nadata
 
 print(paste("the total number of missing values:", nrow_na))
 ```
@@ -175,6 +170,20 @@ print(paste("the total number of missing values:", nrow_na))
 ```
 
 ```r
+#we use the average number of steps of the same interval to the corresponding missing values
+#the dataset with the filled missing values are stored in newdata
+idx_na <- which(is.na(data$steps))
+nadata <- data[idx_na,]
+newdata <- data
+
+interval_list <- unique(nadata$interval)
+for (i in (1:length(interval_list)))
+        {
+        nadata[nadata$interval == interval_list[i], 1] <- average_step_per_interval[as.character(interval_list[i])]
+        }
+newdata[idx_na, ] <- nadata
+
+#re-compute the mean and median
 mean_steps_per_day_mv_filled <- tapply(newdata$steps, newdata$date, mean)
 median_steps_per_day_mv_filled <- tapply(newdata$steps, newdata$date, median)
 print(mean_steps_per_day_mv_filled)
@@ -255,14 +264,16 @@ day <- weekdays(newdata$date)
 weekend_idx <- which(day == "Saturday" | day == "Sunday" )
 newdata$day[weekend_idx] <- "weekend"
 
+#calculate weekdays_ave_step_per_interval and weekend_ave_step_per_interval
 data_weekdays <- newdata[newdata$day == "weekday", ]
 data_weekend <- newdata[newdata$day == "weekend", ]
 weekdays_ave_step_per_interval <- tapply(data_weekdays$steps, data_weekdays$interval, mean)
 weekend_ave_step_per_interval <- tapply(data_weekend$steps, data_weekend$interval, mean)
 
 ave_step_dataframe <- data.frame(ave_step= c(weekdays_ave_step_per_interval, weekend_ave_step_per_interval), interval = c(names(weekdays_ave_step_per_interval), names(weekend_ave_step_per_interval) ), day = c(rep("weekday",each=length(weekdays_ave_step_per_interval)), rep("weekend",each=length(weekend_ave_step_per_interval))) )
-
 ave_step_dataframe$interval <- as.numeric(as.character(ave_step_dataframe$interval))
+
+#here we make a plot
 xyplot(ave_step ~ interval|day,data = ave_step_dataframe, type = "l", layout = c(1,2))
 ```
 
